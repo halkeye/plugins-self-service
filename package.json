@@ -4,7 +4,9 @@
   "scripts": {
     "build": "webpack-cli",
     "dev": "nodemon -w index.js .",
-    "start": "node index.js"
+    "start": "node index.js",
+    "lint": "eslint",
+    "postinstall": "husky install"
   },
   "devDependencies": {
     "autoprefixer": "^10.2.4",
@@ -12,6 +14,11 @@
     "clean-webpack-plugin": "^3.0.0",
     "css-loader": "^5.0.2",
     "eslint": "^7.20.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-standard": "^5.0.0",
+    "eslint-plugin-svelte3": "^3.1.1",
+    "husky": "^5.1.1",
     "mini-css-extract-plugin": "^1.3.8",
     "nodemon": "^2.0.7",
     "postcss-loader": "^5.0.0",

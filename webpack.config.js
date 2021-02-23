@@ -2,15 +2,16 @@
 const SveltePreprocess = require('svelte-preprocess');
 const Autoprefixer = require('autoprefixer');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const path = require('path')
+const path = require('path');
 
 const mode = process.env.NODE_ENV || 'development';
 const isProduction = mode === 'production';
 const isDevelopment = !isProduction;
+const sourceMapsInProduction = true;
 
 module.exports = {
   entry: {
-    bundle: ['./src/main.js'],
+    bundle: ['./src/main.js']
   },
   mode: isProduction ? 'production' : 'development',
   output: {
@@ -40,7 +41,7 @@ module.exports = {
             hotOptions: {
               // List of options and defaults: https://www.npmjs.com/package/svelte-loader-hot#usage
               noPreserveState: false,
-              optimistic: true,
+              optimistic: true
             },
             preprocess: SveltePreprocess({
               scss: true,
@@ -84,7 +85,7 @@ module.exports = {
           {
             loader: MiniCssExtractPlugin.loader
           },
-          'css-loader',
+          'css-loader'
         ]
       },
 
