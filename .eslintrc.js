@@ -18,7 +18,10 @@ module.exports = {
   overrides: [
     {
       files: ['*.svelte'],
-      processor: 'svelte3/svelte3'
+      processor: 'svelte3/svelte3',
+      rules: {
+        'no-multiple-empty-lines': 0
+      }
     }
   ],
   rules: {
