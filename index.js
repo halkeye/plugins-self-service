@@ -17,7 +17,7 @@ const ensureLoggedIn = (req, res, next) => {
   if (req.user) {
     return next();
   }
-  req.session.returnUrl = encodeURIComponent(req.originalUrl);
+  req.session.returnUrl = req.originalUrl;
   res.redirect('/login');
 };
 passport.serializeUser((user, done) => {
