@@ -1,0 +1,19 @@
+query getRepositories($cursor: String) {
+  repositoryOwner(login:"jenkinsci") {
+    repositories(first:100, after:$cursor) {
+      totalCount
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      nodes {
+        owner {
+          login
+        }
+        name
+        viewerCanAdminister
+      }
+    }
+  }
+}
+

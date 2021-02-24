@@ -1,0 +1,11 @@
+query getLabels($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    labels (first:100) {
+      nodes {
+        name
+        color
+        description
+      }
+    }
+  }
+}

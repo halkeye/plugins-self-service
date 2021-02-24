@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const passport = require('passport');
 const GitHubStrategy = require('passport-github2');
@@ -7,8 +8,12 @@ const expressSession = require('express-session');
 const SessionFileStore = require('session-file-store')(expressSession);
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const { graphql } = require('@octokit/graphql');
 
 const app = express();
+
+const GRAPHQL_QUERY_GET_REPOS = fs.readFileSync(path.join(__dirname, 'graphql', 'repos.graphql')).toString();
+const GRAPHQL_QUERY_GET_LABELS = fs.readFileSync(path.join(__dirname, 'graphql', 'getLabels.graphql')).toString();
 
 const port = process.env.PORT || 5000;
 app.set('env', process.env.NODE_ENV || 'development');
@@ -100,9 +105,35 @@ if (app.get('env') === 'development') {
   );
 }
 
-app.get('/api/repos', ensureLoggedIn, (req, res) => {
+app.get('/api/repos', ensureLoggedIn, async (req, res) => {
   console.log('req.user', req.user);
-  res.json({ repos: [] });
+  const repositories = [];
+  let hasNextPage = true;
+  let after = null;
+
+  while (hasNextPage) {
+    const data = await graphql(GRAPHQL_QUERY_GET_REPOS, {
+      cursor: after,
+      headers: {
+        authorization: `token ${req.user.accessToken}`
+      }
+    });
+    repositories.push(...data.repositoryOwner.repositories.nodes.filter(repo => repo.viewerCanAdminister).map(repo => {
+      return {
+        owner: repo.owner.login,
+        name: repo.name
+      };
+    }));
+    hasNextPage = data.repositoryOwner.repositories.pageInfo.hasNextPage;
+    after = data.repositoryOwner.repositories.pageInfo.endCursor;
+  }
+
+  res.json({ repos: repositories });
+});
+
+app.get('/api/repos/:owner/:repository/labels', ensureLoggedIn, async (req, res) => {
+  const data = await graphql(GRAPHQL_QUERY_GET_LABELS, { owner: req.params.owner, name: req.params.repository, headers: { authorization: `token ${req.user.accessToken}` } });
+  res.json({ labels: data.repository.labels });
 });
 
 app.get('*', ensureLoggedIn, (req, res) => {
