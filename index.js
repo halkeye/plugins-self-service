@@ -18,6 +18,9 @@ const GRAPHQL_QUERY_GET_LABELS = fs.readFileSync(path.join(__dirname, 'graphql',
 
 const port = process.env.PORT || 5000;
 app.set('env', process.env.NODE_ENV || 'development');
+if (process.env.TRUST_PROXY) {
+  app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? true : process.env.TRUST_PROXY);
+}
 
 const ensureLoggedIn = (req, res, next) => {
   if (req.user) {
