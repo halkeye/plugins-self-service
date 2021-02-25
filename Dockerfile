@@ -16,6 +16,6 @@ RUN mkdir sessions
 COPY package*.json ./
 RUN npm install
 COPY . .
-COPY --from=build /home/node/public/* ./public/
+COPY --from=build /home/node/public/build ./public/
 
 CMD ["npm","run","start"]
