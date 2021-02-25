@@ -12,9 +12,10 @@ FROM node:14
 ENV NODE_ENV=production
 USER node
 WORKDIR /home/node
+RUN mkdir sessions
 COPY package*.json ./
 RUN npm install
 COPY . .
-COPY --from=0 /home/node/public/* ./public/
+COPY --from=build /home/node/public/* ./public/
 
 CMD ["npm","run","start"]

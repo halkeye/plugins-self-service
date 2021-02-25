@@ -27,7 +27,9 @@ run: ## run the docker hub
 	docker run \
 		-it \
 		--rm \
-		-p 3000:3000 \
+		-p 3000:5000 \
+		-e GITHUB_CLIENT_ID \
+		-e GITHUB_CLIENT_SECRET \
 		--name $(NAME) \
 		$(TAGNAME)
 
