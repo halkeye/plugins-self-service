@@ -120,3 +120,4 @@ dist
 sessions/
 Dockerfile
 .git
+public/build/
