@@ -57,7 +57,11 @@ passport.use(new GitHubStrategy(
 ));
 
 app.use(cors());
-app.use(logger('dev'));
+if (app.get('env') === 'development') {
+  app.use(logger('dev'));
+} else {
+  app.use(logger('combined'));
+}
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
