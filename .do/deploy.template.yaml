@@ -1,0 +1,19 @@
+name: plugins-self-service
+region: nyc
+services:
+- dockerfile_path: Dockerfile
+  envs:
+  - key: GITHUB_CLIENT_ID
+    type: SECRET
+  - key: GITHUB_CLIENT_SECRET
+    type: SECRET
+  github:
+    branch: master
+    deploy_on_push: true
+    repo: halkeye/plugins-self-service
+  http_port: 5000
+  instance_count: 1
+  instance_size_slug: basic-xs
+  name: plugins-self-service
+  routes:
+  - path: /
