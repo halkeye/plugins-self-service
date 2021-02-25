@@ -7,6 +7,7 @@ const createError = require('http-errors');
 const expressSession = require('express-session');
 const SessionFileStore = require('session-file-store')(expressSession);
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
 const logger = require('morgan');
 const { graphql } = require('@octokit/graphql');
 
@@ -55,6 +56,7 @@ passport.use(new GitHubStrategy(
   }
 ));
 
+app.use(cors());
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -89,24 +91,12 @@ app.get('/auth/github/callback', passport.authenticate('github', { failureRedire
   }
 });
 
-if (app.get('env') === 'development') {
-  const webpack = require('webpack');
-  const webpackDevMiddleware = require('webpack-dev-middleware');
-
-  const config = require('./webpack.config.js');
-  const compiler = webpack(config);
-
-  // Tell express to use the webpack-dev-middleware and use the webpack.config.js
-  // configuration file as a base.
-  app.use(
-    webpackDevMiddleware(compiler, {
-      publicPath: config.output.publicPath
-    })
-  );
-}
-
+const cachedRepositories = {};
 app.get('/api/repos', ensureLoggedIn, async (req, res) => {
-  console.log('req.user', req.user);
+  if (cachedRepositories[req.user.accessToken]) {
+    return res.json({ repos: cachedRepositories[req.user.accessToken] });
+  }
+
   const repositories = [];
   let hasNextPage = true;
   let after = null;
@@ -128,6 +118,9 @@ app.get('/api/repos', ensureLoggedIn, async (req, res) => {
     after = data.repositoryOwner.repositories.pageInfo.endCursor;
   }
 
+  if (app.get('env') === 'development') {
+    cachedRepositories[req.user.accessToken] = repositories;
+  }
   res.json({ repos: repositories });
 });
 
@@ -136,10 +129,26 @@ app.get('/api/repos/:owner/:repository/labels', ensureLoggedIn, async (req, res)
   res.json({ labels: data.repository.labels });
 });
 
-app.get('*', ensureLoggedIn, (req, res) => {
+app.get('/', ensureLoggedIn, (req, res) => {
   console.log('root');
   res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
 });
+
+if (app.get('env') === 'development') {
+  const webpack = require('webpack');
+  const webpackDevMiddleware = require('webpack-dev-middleware');
+
+  const config = require('./webpack.config.js');
+  const compiler = webpack(config);
+
+  // Tell express to use the webpack-dev-middleware and use the webpack.config.js
+  // configuration file as a base.
+  app.use(
+    webpackDevMiddleware(compiler, {
+      publicPath: config.output.publicPath
+    })
+  );
+}
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
@@ -154,7 +163,7 @@ app.use((err, req, res, next) => {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  res.json(res.locals);
 });
 
 app.listen(port, () => {
