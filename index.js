@@ -61,7 +61,6 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(expressSession({
   store: new SessionFileStore({}),
   resave: false,
@@ -134,6 +133,7 @@ app.get('/', ensureLoggedIn, (req, res) => {
   res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
 });
 
+app.use(express.static(path.join(__dirname, 'public')));
 if (app.get('env') === 'development') {
   const webpack = require('webpack');
   const webpackDevMiddleware = require('webpack-dev-middleware');
