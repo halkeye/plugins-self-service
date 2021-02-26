@@ -40,7 +40,7 @@
           <tr>
             <td class="data">
               <mwc-list>
-                <mwc-list-item twoline={true} hasMeta={true}>
+                <mwc-list-item twoline={true} noninteractive={true} hasMeta={true}>
                   {#if labels.existingLabels[label]}
                   <span>{labels.existingLabels[label].name || ''}</span>
                   <span slot="secondary">{labels.existingLabels[label].description || ''}</span>
@@ -56,7 +56,7 @@
             </td>
             <td class="data">
               <mwc-list>
-                <mwc-list-item twoline={true} hasMeta={true}>
+                <mwc-list-item twoline={true} noninteractive={true} hasMeta={true}>
                   <span>{labels.newLabels[label].name || ''}</span>
                   <span slot="secondary">{labels.newLabels[label].description || ''}</span>
                   <span slot="meta" style="color: #{labels.newLabels[label].color}" class="material-icons">info</span>
