@@ -36,7 +36,7 @@
       <p>...grabbing a list labels for {name}</p>
     {:then labels}
       <table>
-        {#each Object.keys(labels.newLabels) as label}
+        {#each Object.keys(labels.newLabels).sort() as label}
           <tr>
             <td class="data">
               <mwc-list>
