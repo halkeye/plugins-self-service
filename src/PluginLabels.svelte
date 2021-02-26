@@ -2,47 +2,79 @@
   import '@material/mwc-button';
   import '@material/mwc-dialog';
   import '@material/mwc-list';
+  import '@material/mwc-icon';
+  import '@material/mwc-circular-progress';
 
-  export let open = false;
   export let name;
   export let owner;
 
-  const handleClosed = (e, ...args) => console.log('closed', e.detail, ...args);
-  const handleClosing = (e, ...args) => console.log('closing', e.detail, ...args);
+  const fetchLabels = (owner, name) => fetch(`/api/repos/${owner}/${name}/labels`).then(response => response.json());
+  /* icons: add, remove */
 </script>
 
+<style>
+  .styled {
+    --mdc-dialog-max-width: 700px;
+    --mdc-dialog-min-width: 700px;
+  }
+  td.operator {
+    width: 30px;
+    min-width: 30px;
+    max-width: 30px;
+  }
+  td.data {
+    width: 300px;
+    max-width: 300px;
+    min-width: 300px;
+  }
+</style>
+
 <main>
-  <mwc-dialog id="dialog2" heading="Actions" open={open} on:closed={handleClosed} on:closing={handleClosing}>
+  <mwc-dialog heading="Labels" open={true} on:closed on:closing class="styled">
+    {#await fetchLabels(owner, name)}
+      <mwc-circular-progress indeterminate={true}></mwc-circular-progress>
+      <p>...grabbing a list labels for {name}</p>
+    {:then labels}
       <table>
-        <thead>
+        {#each Object.keys(labels.newLabels) as label}
           <tr>
-            <th>Existing Label</th>
-            <th>New Label</th>
+            <td class="data">
+              <mwc-list>
+                <mwc-list-item twoline={true} hasMeta={true}>
+                  {#if labels.existingLabels[label]}
+                  <span>{labels.existingLabels[label].name || ''}</span>
+                  <span slot="secondary">{labels.existingLabels[label].description || ''}</span>
+                  {#if labels.existingLabels[label].color}
+                  <span slot="meta" style="color: #{labels.existingLabels[label].color}" class="material-icons">info</span>
+                  {/if}
+                  {/if}
+                </mwc-list-item>
+              </mwc-list>
+            </td>
+            <td class="operator">
+              <mwc-icon>double_arrow</mwc-icon>
+            </td>
+            <td class="data">
+              <mwc-list>
+                <mwc-list-item twoline={true} hasMeta={true}>
+                  <span>{labels.newLabels[label].name || ''}</span>
+                  <span slot="secondary">{labels.newLabels[label].description || ''}</span>
+                  <span slot="meta" style="color: #{labels.newLabels[label].color}" class="material-icons">info</span>
+                </mwc-list-item>
+              </mwc-list>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>a</td>
-            <td>b</td>
-          </tr>
-        </tbody>
+        {/each}
       </table>
-    <p>
-      By setting the dialogAction="my-action" attribute on any element projected into
-      mwc-dialog, you can close the dialog by clicking on that element. The
-      dialog will then fire a non-bubbling "closing" event and a non-bubbling
-      "closed" event with an event detail of action: "my-action"
-      <mwc-list multi={true}>
-        <mwc-list-item>Item 0</mwc-list-item>
-        <mwc-list-item>{owner}</mwc-list-item>
-        <mwc-list-item>{name}</mwc-list-item>
-      </mwc-list>
-    </p>
+    {:catch error}
+      <p>An error occurred!</p>
+      <pre>
+        <xmp>
+          {error}
+        </xmp>
+      </pre>
+    {/await}
     <mwc-button slot="primaryAction" dialogAction="apply">Apply</mwc-button>
     <mwc-button slot="secondaryAction" dialogAction="cancel">Cancel</mwc-button>
   </mwc-dialog>
 </main>
-
-<style>
-</style>
-

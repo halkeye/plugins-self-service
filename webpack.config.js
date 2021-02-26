@@ -44,8 +44,8 @@ module.exports = {
               optimistic: true
             },
             preprocess: SveltePreprocess({
-              scss: true,
-              sass: true,
+              scss: false,
+              sass: false,
               postcss: {
                 plugins: [
                   Autoprefixer
@@ -55,29 +55,6 @@ module.exports = {
           }
         }
       },
-
-      // Rule: SASS
-      {
-        test: /\.(scss|sass)$/,
-        use: [
-          {
-            loader: MiniCssExtractPlugin.loader
-          },
-          'css-loader',
-          {
-            loader: 'postcss-loader',
-            options: {
-              postcssOptions: {
-                plugins: [
-                  Autoprefixer
-                ]
-              }
-            }
-          },
-          'sass-loader'
-        ]
-      },
-
       // Rule: CSS
       {
         test: /\.css$/,

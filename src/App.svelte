@@ -2,11 +2,19 @@
   import '@material/mwc-button';
   import '@material/mwc-dialog';
   import '@material/mwc-list';
+  import '@material/mwc-icon';
+  import '@material/mwc-circular-progress';
   import PluginLabels from './PluginLabels.svelte';
+
+  let selected = null;
 
   const fetchRepos = () => fetch('/api/repos').then(response => response.json()).then(data => data.repos);
   const handlePluginLabelClick = (e) => {
-    console.log('data', e.target.dataset.repo);
+    selected = { ...e.target.dataset };
+  };
+  const handleClosed = (e, ...args) => {
+    selected = null;
+    console.log('closed', e.detail, ...args);
   };
 </script>
 
@@ -16,17 +24,20 @@
 
 <main>
   {#await fetchRepos()}
-      <p>...grabbing a list of plugins you have admin on</p>
+    <mwc-circular-progress indeterminate={true}></mwc-circular-progress>
+    <p>...grabbing a list of plugins you have admin on</p>
   {:then repos}
     <table>
     {#each repos as repo}
       <tr>
         <td>{repo.name}</td>
-        <td><mwc-button data-repo={repo.name} on:click={handlePluginLabelClick} label="Setup Standard Labels" raised={true}></mwc-button></td>
+        <td><mwc-button data-owner={repo.owner} data-name={repo.name} on:click={handlePluginLabelClick} label="Setup Standard Labels" raised={true}></mwc-button></td>
       </tr>
     {/each}
     </table>
-    <PluginLabels owner="jenkinsci" name="digitalocean-plugin" open={false}></PluginLabels>
+    {#if selected}
+      <PluginLabels owner={selected.owner} name={selected.name} on:closed={handleClosed}></PluginLabels>
+    {/if}
   {:catch error}
       <p>An error occurred!</p>
       <pre>
@@ -38,16 +49,4 @@
 </main>
 
 <style>
-  main {
-    text-align: center;
-    padding: 1em;
-    max-width: 240px;
-    margin: 0 auto;
-  }
-
-  @media (min-width: 640px) {
-    main {
-      max-width: none;
-    }
-  }
 </style>

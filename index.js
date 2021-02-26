@@ -15,6 +15,117 @@ const app = express();
 
 const GRAPHQL_QUERY_GET_REPOS = fs.readFileSync(path.join(__dirname, 'graphql', 'repos.graphql')).toString();
 const GRAPHQL_QUERY_GET_LABELS = fs.readFileSync(path.join(__dirname, 'graphql', 'getLabels.graphql')).toString();
+const OFFICIAL_LABELS = Object.freeze([
+  {
+    name: 'good first issue',
+    color: '7057ff'
+  },
+  {
+    name: 'hackathon',
+    color: '85f920'
+  },
+  {
+    name: 'help wanted',
+    color: 442
+  },
+  {
+    name: 'question',
+    color: 'D876E3'
+  },
+  {
+    name: 'wontfix',
+    color: 'FFFFFF'
+  },
+  {
+    name: 'duplicate',
+    color: 'CFD3D7'
+  },
+  {
+    name: 'bug',
+    color: 'D73A4A'
+  },
+  {
+    name: 'documentation',
+    color: '0e8a16',
+    description: 'A PR that adds to documentation - used by Release Drafter'
+  },
+  {
+    name: 'hacktoberfest',
+    color: 'bdff3a',
+    description: 'Hacktoberfest. https://jenkins.io/blog/2018/10/01/hacktoberfest/'
+  },
+  {
+    name: 'feature',
+    color: '1d00ff',
+    description: 'A PR that adds a feature - used by Release Drafter'
+  },
+  {
+    name: 'bugfix',
+    oldname: 'fix',
+    color: 'c9e85c',
+    description: 'A PR that fixes a bug - used by Release Drafter'
+  },
+  {
+    name: 'chore',
+    color: 'c9abea',
+    description: 'a PR that adds to maintenance - used by Release Drafter'
+  },
+  {
+    name: 'test',
+    color: 'd6e819',
+    description: 'A PR that adds to testing - used by Release Drafter'
+  },
+  {
+    name: 'pinned',
+    color: '5ed5e5',
+    description: 'Used to avoid stale[bot] marking a issue/PR stale'
+  },
+  {
+    name: 'plugin-compatibility',
+    color: '8425c4'
+  },
+  {
+    name: 'stale',
+    color: 'ffffff',
+    description: 'Used by stale[bot] to mark a issue/PR stale'
+  },
+  {
+    name: 'skip-changelog',
+    color: 'f44271',
+    description: 'A PR that is excluded from Release draft - used by Release Drafter'
+  },
+  {
+    name: 'removed',
+    color: 'aa0f1c',
+    description: 'A PR that removes code - used by Release Drafter'
+  },
+  {
+    name: 'deprecated',
+    color: 'e2b626',
+    description: 'A PR that deprecates code - used by Release Drafter'
+  },
+  {
+    name: 'breaking',
+    color: 640910,
+    description: 'A PR that is a breaking change - used by Release Drafter'
+  },
+  {
+    name: 'dependencies',
+    color: '0366d6',
+    description: 'A PR that updates dependencies - used by Release Drafter'
+  }
+]);
+
+function reduceToObject (field) {
+  return (previousValue, currentValue) => {
+    previousValue[currentValue[field]] = {
+      // merge them
+      ...(previousValue[currentValue[field]] || {}),
+      ...currentValue
+    };
+    return previousValue;
+  };
+}
 
 const port = process.env.PORT || 5000;
 app.set('env', process.env.NODE_ENV || 'development');
@@ -100,7 +211,7 @@ app.get('/auth/github/callback', passport.authenticate('github', { failureRedire
 const cachedRepositories = {};
 app.get('/api/repos', ensureLoggedIn, async (req, res) => {
   if (cachedRepositories[req.user.accessToken]) {
-    return res.json({ repos: cachedRepositories[req.user.accessToken] });
+    return res.json(cachedRepositories[req.user.accessToken]);
   }
 
   const repositories = [];
@@ -124,15 +235,27 @@ app.get('/api/repos', ensureLoggedIn, async (req, res) => {
     after = data.repositoryOwner.repositories.pageInfo.endCursor;
   }
 
+  const ret = { repos: repositories };
   if (app.get('env') === 'development') {
-    cachedRepositories[req.user.accessToken] = repositories;
+    cachedRepositories[req.user.accessToken] = ret;
   }
-  res.json({ repos: repositories });
+  res.json(ret);
 });
 
+const cachedLabels = {};
 app.get('/api/repos/:owner/:repository/labels', ensureLoggedIn, async (req, res) => {
+  if (cachedLabels[req.params.repository]) {
+    return res.json(cachedLabels[req.params.repository]);
+  }
   const data = await graphql(GRAPHQL_QUERY_GET_LABELS, { owner: req.params.owner, name: req.params.repository, headers: { authorization: `token ${req.user.accessToken}` } });
-  res.json({ labels: data.repository.labels });
+  const ret = {
+    existingLabels: data.repository.labels.nodes.reduce(reduceToObject('name'), {}),
+    newLabels: [...data.repository.labels.nodes, ...OFFICIAL_LABELS].reduce(reduceToObject('name'), {})
+  };
+  if (app.get('env') === 'development') {
+    cachedLabels[req.params.repository] = ret;
+  }
+  res.json(ret);
 });
 
 app.get('/', ensureLoggedIn, (req, res) => {
