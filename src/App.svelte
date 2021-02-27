@@ -31,7 +31,8 @@
     {#each repos as repo}
       <tr>
         <td>{repo.name}</td>
-        <td><mwc-button data-owner={repo.owner} data-name={repo.name} on:click={handlePluginLabelClick} label="Setup Standard Labels" raised={true}></mwc-button></td>
+        <td><mwc-button data-owner={repo.owner} data-name={repo.name} on:click={handlePluginLabelClick} label="Github Labels" raised={true}></mwc-button></td>
+        <td><mwc-button data-owner={repo.owner} data-name={repo.name} on:click={handlePluginLabelClick} label="Plugin Labels" raised={true}></mwc-button></td>
       </tr>
     {/each}
     </table>
