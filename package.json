@@ -7,7 +7,7 @@
   "scripts": {
     "build": "webpack-cli",
     "dev": "nodemon -w index.js -w graphql -w app -e js,mjs,json,graphql ./bin/www",
-    "start": "node index.js",
+    "start": "node ./bin/www",
     "lint": "eslint --cache ."
   },
   "devDependencies": {
