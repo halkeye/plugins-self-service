@@ -69,25 +69,33 @@ const getLabels = async (req, res) => {
 };
 
 const updateLabels = async (req, res) => {
-  req.params.owner = 'halkeye';
-  req.params.repository = 'testrepo';
+  const repositoryId = await graphql(
+    'query($owner: String!, $name: String!) { repository(name: $name, owner: $owner) { id } }', {
+      owner: req.params.owner,
+      name: req.params.repository,
+      headers: { authorization: `token ${req.user.accessToken}` }
+    }
+  ).then(data => data.repository.id);
 
-  const existingLabels = (await graphql(
+  const existingLabels = await graphql(
     GRAPHQL_QUERY_GET_LABELS, {
       owner: req.params.owner,
       name: req.params.repository,
       headers: { authorization: `token ${req.user.accessToken}` }
     }
-  )).repository.labels.nodes.reduce(reduceToObject('name'), {});
+  ).then(data => data.repository.labels.nodes.reduce(reduceToObject('name'), {}));
 
   const mutations = [];
   const fields = [];
   const options = {
     headers: {
-      authorization: `token ${req.user.accessToken}`
+      authorization: `token ${req.user.accessToken}`,
+      accept: 'application/vnd.github.bane-preview+json'
     }
   };
+
   OFFICIAL_LABELS.forEach((label, idx) => {
+    fields.push(`$clientMutationId${idx}: String!, $color${idx}: String, $description${idx}: String, $name${idx}: String!`);
     options[`clientMutationId${idx}`] = uuidv4();
     options[`color${idx}`] = label.color;
     options[`description${idx}`] = label.description;
@@ -95,16 +103,24 @@ const updateLabels = async (req, res) => {
 
     if (existingLabels[label.name]) {
       // update
-      options[`id${idx}`] = label.id;
+      options[`id${idx}`] = existingLabels[label.name].id;
+      fields.push(`$id${idx}: ID!`);
       mutations.push(`label${idx}: updateLabel(input: {clientMutationId: $clientMutationId${idx}, color: $color${idx}, description: $description${idx}, id: $id${idx}, name: $name${idx}})`);
-      fields.push(`$clientMutationId${idx}: String!, $color${idx}: String!, $description${idx}: String!, $name${idx}: String!`);
     } else {
-      mutations.push(`label${idx}: addLabel(input: {clientMutationId: $clientMutationId${idx}, color: $color${idx}, description: $description${idx}, name: $name${idx}})`);
-      fields.push(`$clientMutationId${idx}: String!, $color${idx}: String!, $description${idx}: String!, $id${idx}: ID!, $name${idx}: String!`);
+      mutations.push(`label${idx}: createLabel(input: {clientMutationId: $clientMutationId${idx}, color: $color${idx}, description: $description${idx}, name: $name${idx}, repositoryId: $repositoryId${idx}})`);
+      options[`repositoryId${idx}`] = repositoryId;
+      fields.push(`$repositoryId${idx}: ID!`);
     }
+    mutations.push('{ clientMutationId }');
   });
   const body = `mutation(${fields.join(',\n')}) {\n${mutations.join('\n')}\n}`;
-  res.type('text/plain').send(body);
+  try {
+    await graphql(body, options);
+    res.json({ ok: 1 });
+  } catch (err) {
+    console.error('Error updating labels', err);
+    res.json({ err });
+  }
 };
 
 module.exports = {

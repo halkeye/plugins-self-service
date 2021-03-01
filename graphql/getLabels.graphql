@@ -2,6 +2,7 @@ query getLabels($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
     labels (first:100) {
       nodes {
+        id
         name
         color
         description
