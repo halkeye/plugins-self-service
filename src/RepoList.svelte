@@ -1,4 +1,5 @@
 <script>
+  import Fetch from 'svelte-fetch';
   import '@material/mwc-button';
   import '@material/mwc-dialog';
   import '@material/mwc-list';
@@ -7,14 +8,10 @@
   import PluginLabels from './PluginLabels.svelte';
 
   let selected = null;
-  let pending = false;
+  const fetch = new Fetch();
 
   const fetchRepos = () => {
-    pending = true;
-    return fetch('/api/repos').then(response => response.json()).then(data => {
-      pending = false;
-      return data.repos;
-    });
+    return fetch.request('/api/repos').then(response => response.json()).then(data => data.repos);
   };
   const handleGithubLabelClick = (e) => {
     selected = { ...e.target.dataset, type: 'githubLabels' };
@@ -25,8 +22,7 @@
   };
   const handleClosed = (e, ...args) => {
     if (e.detail.action === 'applyLabels') {
-      pending = true;
-      fetch(`/api/repos/${selected.owner}/${selected.name}/labels`, {
+      fetch.request(`/api/repos/${selected.owner}/${selected.name}/labels`, {
         method: 'POST',
         credentials: 'include',
         body: ''
@@ -34,7 +30,6 @@
         if (!data.ok) {
           alert(data.message);
         }
-        pending = false;
       });
     }
     selected = null;
@@ -93,11 +88,5 @@
         </xmp>
       </pre>
   {/await}
-  {#if pending}
-    <mwc-dialog heading="Acting" open={true} on:closed class="styled">
-      <mwc-circular-progress indeterminate={true}></mwc-circular-progress>
-      <p>Working</p>
-    </mwc-dialog>
-  {/if}
 </main>
 

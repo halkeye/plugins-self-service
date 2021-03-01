@@ -1,4 +1,5 @@
 <script>
+  import Fetch from 'svelte-fetch';
   import '@material/mwc-button';
   import '@material/mwc-dialog';
   import '@material/mwc-list';
@@ -8,7 +9,8 @@
   export let name;
   export let owner;
 
-  const fetchLabels = (owner, name) => fetch(`/api/repos/${owner}/${name}/labels`).then(response => response.json());
+  const fetch = new Fetch();
+  const fetchLabels = (owner, name) => fetch.request(`/api/repos/${owner}/${name}/labels`).then(response => response.json());
   /* icons: add, remove */
 </script>
 
@@ -32,7 +34,6 @@
 <main>
   <mwc-dialog heading="Labels" open={true} on:closed class="styled">
     {#await fetchLabels(owner, name)}
-      <mwc-circular-progress indeterminate={true}></mwc-circular-progress>
       <p>...grabbing a list labels for {name}</p>
     {:then labels}
       <table>
