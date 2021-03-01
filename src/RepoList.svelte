@@ -16,8 +16,11 @@
       return data.repos;
     });
   };
+  const handleGithubLabelClick = (e) => {
+    selected = { ...e.target.dataset, type: 'githubLabels' };
+  };
   const handlePluginLabelClick = (e) => {
-    selected = { ...e.target.dataset };
+    selected = { ...e.target.dataset, type: 'pluginLabels' };
   };
   const handleClosed = (e, ...args) => {
     if (e.detail.action === 'applyLabels') {
@@ -74,7 +77,7 @@
     {#each repos as repo}
     <div class="row">
       <div>{repo.name}</div>
-      <div><mwc-button data-owner={repo.owner} data-name={repo.name} on:click={handlePluginLabelClick} label="Github Labels" raised={true}></mwc-button></div>
+      <div><mwc-button data-owner={repo.owner} data-name={repo.name} on:click={handleGithubLabelClick} label="Github Labels" raised={true}></mwc-button></div>
       <div><mwc-button data-owner={repo.owner} data-name={repo.name} on:click={handlePluginLabelClick} label="Plugin Labels" raised={true}></mwc-button></div>
     </div>
     {/each}
