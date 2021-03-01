@@ -30,7 +30,7 @@
 </style>
 
 <main>
-  <mwc-dialog heading="Labels" open={true} on:closed on:closing class="styled">
+  <mwc-dialog heading="Labels" open={true} on:closed class="styled">
     {#await fetchLabels(owner, name)}
       <mwc-circular-progress indeterminate={true}></mwc-circular-progress>
       <p>...grabbing a list labels for {name}</p>
@@ -74,7 +74,7 @@
         </xmp>
       </pre>
     {/await}
-    <mwc-button slot="primaryAction" dialogAction="apply">Apply</mwc-button>
+    <mwc-button slot="primaryAction" dialogAction="applyLabels">Apply</mwc-button>
     <mwc-button slot="secondaryAction" dialogAction="cancel">Cancel</mwc-button>
   </mwc-dialog>
 </main>

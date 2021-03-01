@@ -41,6 +41,7 @@ passport.use(new GitHubStrategy(
   {
     clientID: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    scope: ['public_repo'],
     callbackURL: '/auth/github/callback'
   },
   (accessToken, refreshToken, profile, done) => {

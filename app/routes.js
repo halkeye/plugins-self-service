@@ -119,7 +119,7 @@ const updateLabels = async (req, res) => {
     res.json({ ok: 1 });
   } catch (err) {
     console.error('Error updating labels', err);
-    res.json({ err });
+    res.json({ ok: 0, message: err.toString() });
   }
 };
 
