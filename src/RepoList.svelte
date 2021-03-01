@@ -5,7 +5,7 @@
   import '@material/mwc-list';
   import '@material/mwc-icon';
   import '@material/mwc-circular-progress';
-  import PluginLabels from './PluginLabels.svelte';
+  import GithubLabels from './GithubLabels.svelte';
 
   let selected = null;
   const fetch = new Fetch();
@@ -78,7 +78,7 @@
     </div>
     {/each}
     {#if selected}
-      <PluginLabels owner={selected.owner} name={selected.name} on:closed={handleClosed}></PluginLabels>
+      <GithubLabels owner={selected.owner} name={selected.name} on:closed={handleClosed}></GithubLabels>
     {/if}
   {:catch error}
       <p>An error occurred!</p>
