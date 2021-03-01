@@ -20,7 +20,8 @@
     selected = { ...e.target.dataset, type: 'githubLabels' };
   };
   const handlePluginLabelClick = (e) => {
-    selected = { ...e.target.dataset, type: 'pluginLabels' };
+    alert('not implemented yet');
+    // selected = { ...e.target.dataset, type: 'pluginLabels' };
   };
   const handleClosed = (e, ...args) => {
     if (e.detail.action === 'applyLabels') {
