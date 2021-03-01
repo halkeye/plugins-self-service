@@ -69,21 +69,18 @@ const getLabels = async (req, res) => {
 };
 
 const updateLabels = async (req, res) => {
-  const repositoryId = await graphql(
-    'query($owner: String!, $name: String!) { repository(name: $name, owner: $owner) { id } }', {
-      owner: req.params.owner,
-      name: req.params.repository,
-      headers: { authorization: `token ${req.user.accessToken}` }
-    }
-  ).then(data => data.repository.id);
-
-  const existingLabels = await graphql(
+  const { repositoryId, existingLabels } = await graphql(
     GRAPHQL_QUERY_GET_LABELS, {
       owner: req.params.owner,
       name: req.params.repository,
       headers: { authorization: `token ${req.user.accessToken}` }
     }
-  ).then(data => data.repository.labels.nodes.reduce(reduceToObject('name'), {}));
+  ).then(data => {
+    return {
+      repositoryId: data.repository.id,
+      existingLabels: data.repository.labels.nodes.reduce(reduceToObject('name'), {})
+    };
+  });
 
   const mutations = [];
   const fields = [];

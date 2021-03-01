@@ -1,5 +1,6 @@
 query getLabels($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
+    id
     labels (first:100) {
       nodes {
         id
