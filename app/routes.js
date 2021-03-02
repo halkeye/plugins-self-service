@@ -1,3 +1,4 @@
+const fetch = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
@@ -7,6 +8,17 @@ const yaml = require('js-yaml');
 const OFFICIAL_LABELS = yaml.load(fs.readFileSync(path.join(__dirname, '..', 'labels.yaml'))).labels;
 const GRAPHQL_QUERY_GET_REPOS = fs.readFileSync(path.join(__dirname, '..', 'graphql', 'repos.graphql')).toString();
 const GRAPHQL_QUERY_GET_LABELS = fs.readFileSync(path.join(__dirname, '..', 'graphql', 'getLabels.graphql')).toString();
+const GRAPHQL_QUERY_GET_TOPICS = fs.readFileSync(path.join(__dirname, '..', 'graphql', 'getTopics.graphql')).toString();
+const GRAPHQL_QUERY_UPDATE_TOPICS = fs.readFileSync(path.join(__dirname, '..', 'graphql', 'updateTopics.graphql')).toString();
+let POSSIBLE_TOPICS = fetchPossibleTopics();
+
+function fetchPossibleTopics () {
+  return fetch('https://plugins.jenkins.io/api/labels')
+    .then(response => response.json())
+    .then(data => data.labels)
+    .then(labels => labels.sort((a, b) => a.id.localeCompare(b.id)));
+}
+setTimeout(() => { POSSIBLE_TOPICS = fetchPossibleTopics(); }, 3600000); // fetch new labels every hour
 
 function reduceToObject (field) {
   return (previousValue, currentValue) => {
@@ -52,19 +64,13 @@ const getRepos = async (req, res) => {
   }
   res.json(ret);
 };
-const cachedLabels = {};
+
 const getLabels = async (req, res) => {
-  if (cachedLabels[req.params.repository]) {
-    return res.json(cachedLabels[req.params.repository]);
-  }
   const data = await graphql(GRAPHQL_QUERY_GET_LABELS, { owner: req.params.owner, name: req.params.repository, headers: { authorization: `token ${req.user.accessToken}` } });
   const ret = {
     existingLabels: data.repository.labels.nodes.reduce(reduceToObject('name'), {}),
     newLabels: [...data.repository.labels.nodes, ...OFFICIAL_LABELS].reduce(reduceToObject('name'), {})
   };
-  if (res.locals.env === 'development') {
-    cachedLabels[req.params.repository] = ret;
-  }
   res.json(ret);
 };
 
@@ -120,8 +126,48 @@ const updateLabels = async (req, res) => {
   }
 };
 
+const getTopics = async (req, res) => {
+  const data = await graphql(GRAPHQL_QUERY_GET_TOPICS, { owner: req.params.owner, name: req.params.repository, headers: { authorization: `token ${req.user.accessToken}` } });
+  const ret = {
+    existingTopics: data.repository.repositoryTopics.nodes
+      .map(node => node.topic)
+      .map(topic => { topic.name = topic.name.replace(/^jenkins-/i, ''); return topic; })
+      .reduce(reduceToObject('name'), {}),
+    possibleTopics: await POSSIBLE_TOPICS
+  };
+  res.json(ret);
+};
+
+const updateTopics = async (req, res) => {
+  const data = await graphql(GRAPHQL_QUERY_GET_TOPICS, { owner: req.params.owner, name: req.params.repository, headers: { authorization: `token ${req.user.accessToken}` } });
+  const repositoryId = data.repository.id;
+  const possibleTopics = await POSSIBLE_TOPICS.then(topics => topics.reduce(reduceToObject('id'), {}));
+  // filter out any topics that are not in the list of all labels so we can re-apply them
+  const extraTopics = data.repository.repositoryTopics.nodes.map(node => node.topic.name.replace(/^jenkins-/i, '')).filter(n => !possibleTopics[n]);
+
+  const options = {
+    clientMutationId: uuidv4(),
+    repositoryId: repositoryId,
+    topicNames: extraTopics.concat(req.body.topicNames.map(topicName => `jenkins-${topicName}`)),
+    headers: {
+      authorization: `token ${req.user.accessToken}`,
+      accept: 'application/vnd.github.bane-preview+json'
+    }
+  };
+
+  try {
+    await graphql(GRAPHQL_QUERY_UPDATE_TOPICS, options);
+    res.json({ ok: 1 });
+  } catch (err) {
+    console.error('Error updating labels', err);
+    res.json({ ok: 0, message: err.toString() });
+  }
+};
+
 module.exports = {
   getRepos,
   getLabels,
-  updateLabels
+  updateLabels,
+  getTopics,
+  updateTopics
 };

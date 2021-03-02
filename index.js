@@ -103,7 +103,8 @@ app.get('/auth/github/callback', passport.authenticate('github', { failureRedire
 app.get('/api/repos', ensureLoggedIn, Routes.getRepos);
 app.get('/api/repos/:owner/:repository/labels', ensureLoggedIn, Routes.getLabels);
 app.post('/api/repos/:owner/:repository/labels', ensureLoggedIn, Routes.updateLabels);
-app.get('/gavin', ensureLoggedIn, Routes.updateLabels);
+app.get('/api/repos/:owner/:repository/topics', ensureLoggedIn, Routes.getTopics);
+app.post('/api/repos/:owner/:repository/topics', ensureLoggedIn, Routes.updateTopics);
 
 app.get('/', ensureLoggedIn, (req, res) => {
   console.log('root');

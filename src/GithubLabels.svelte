@@ -1,17 +1,30 @@
 <script>
-  import Fetch from 'svelte-fetch';
-  import '@material/mwc-button';
-  import '@material/mwc-dialog';
-  import '@material/mwc-list';
-  import '@material/mwc-icon';
-  import '@material/mwc-circular-progress';
+import { createEventDispatcher } from 'svelte';
+import Fetch from 'svelte-fetch';
+import '@material/mwc-button';
+import '@material/mwc-dialog';
+import '@material/mwc-list';
+import '@material/mwc-icon';
+import '@material/mwc-circular-progress';
 
-  export let name;
-  export let owner;
+export let name;
+export let owner;
 
-  const fetch = new Fetch();
-  const fetchLabels = (owner, name) => fetch.request(`/api/repos/${owner}/${name}/labels`).then(response => response.json());
-  /* icons: add, remove */
+const dispatch = createEventDispatcher();
+const fetch = new Fetch();
+const fetchLabels = (owner, name) => fetch.request(`/api/repos/${owner}/${name}/labels`).then(response => response.json());
+const handleApply = (e, ...args) => {
+  fetch.request(`/api/repos/${owner}/${name}/labels`, {
+    method: 'POST',
+    credentials: 'include',
+    body: ''
+  }).then(response => response.json()).then(data => {
+    if (!data.ok) {
+      alert(data.message);
+    }
+  });
+  dispatch('closed');
+};
 </script>
 
 <style>
@@ -75,7 +88,7 @@
         </xmp>
       </pre>
     {/await}
-    <mwc-button slot="primaryAction" dialogAction="applyLabels">Apply</mwc-button>
+    <mwc-button slot="primaryAction" on:click={handleApply}>Apply</mwc-button>
     <mwc-button slot="secondaryAction" dialogAction="cancel">Cancel</mwc-button>
   </mwc-dialog>
 </main>

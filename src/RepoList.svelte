@@ -6,6 +6,7 @@
   import '@material/mwc-icon';
   import '@material/mwc-circular-progress';
   import GithubLabels from './GithubLabels.svelte';
+  import PluginLabels from './PluginLabels.svelte';
 
   let selected = null;
   const fetch = new Fetch();
@@ -17,21 +18,9 @@
     selected = { ...e.target.dataset, type: 'githubLabels' };
   };
   const handlePluginLabelClick = (e) => {
-    alert('not implemented yet');
-    // selected = { ...e.target.dataset, type: 'pluginLabels' };
+    selected = { ...e.target.dataset, type: 'pluginLabels' };
   };
   const handleClosed = (e, ...args) => {
-    if (e.detail.action === 'applyLabels') {
-      fetch.request(`/api/repos/${selected.owner}/${selected.name}/labels`, {
-        method: 'POST',
-        credentials: 'include',
-        body: ''
-      }).then(response => response.json()).then(data => {
-        if (!data.ok) {
-          alert(data.message);
-        }
-      });
-    }
     selected = null;
   };
 </script>
@@ -72,13 +61,16 @@
   {:then repos}
     {#each repos as repo}
     <div class="row">
-      <div>{repo.name}</div>
+      <div><a href={`https://github.com/${repo.owner}/${repo.name}/`}>{repo.name}</a></div>
       <div><mwc-button data-owner={repo.owner} data-name={repo.name} on:click={handleGithubLabelClick} label="Github Labels" raised={true}></mwc-button></div>
       <div><mwc-button data-owner={repo.owner} data-name={repo.name} on:click={handlePluginLabelClick} label="Plugin Labels" raised={true}></mwc-button></div>
     </div>
     {/each}
-    {#if selected}
+    {#if selected && selected.type === 'githubLabels'}
       <GithubLabels owner={selected.owner} name={selected.name} on:closed={handleClosed}></GithubLabels>
+    {/if}
+    {#if selected && selected.type === 'pluginLabels'}
+      <PluginLabels owner={selected.owner} name={selected.name} on:closed={handleClosed}></PluginLabels>
     {/if}
   {:catch error}
       <p>An error occurred!</p>

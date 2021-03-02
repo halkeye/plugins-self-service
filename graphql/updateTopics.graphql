@@ -1,0 +1,9 @@
+mutation($clientMutationId: String!, $repositoryId: ID!, $topicNames: [String!]!) {
+  updateTopics(input: {
+    clientMutationId: $clientMutationId,
+    repositoryId: $repositoryId,
+    topicNames: $topicNames
+  }) {
+    clientMutationId
+  }
+}

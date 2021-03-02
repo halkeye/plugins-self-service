@@ -1,0 +1,15 @@
+query getTopics($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    id
+    repositoryTopics (first:100) {
+      nodes {
+        id
+        topic {
+          id
+          name
+        }
+        url
+      }
+    }
+  }
+}
