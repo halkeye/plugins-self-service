@@ -6,7 +6,6 @@ const { graphql } = require('@octokit/graphql');
 const yaml = require('js-yaml');
 
 const OFFICIAL_LABELS = yaml.load(fs.readFileSync(path.join(__dirname, '..', 'labels.yaml'))).labels;
-const GRAPHQL_QUERY_GET_REPOS = fs.readFileSync(path.join(__dirname, '..', 'graphql', 'repos.graphql')).toString();
 const GRAPHQL_QUERY_GET_LABELS = fs.readFileSync(path.join(__dirname, '..', 'graphql', 'getLabels.graphql')).toString();
 const GRAPHQL_QUERY_GET_TOPICS = fs.readFileSync(path.join(__dirname, '..', 'graphql', 'getTopics.graphql')).toString();
 const GRAPHQL_QUERY_UPDATE_TOPICS = fs.readFileSync(path.join(__dirname, '..', 'graphql', 'updateTopics.graphql')).toString();
@@ -31,38 +30,18 @@ function reduceToObject (field) {
   };
 }
 
-const cachedRepositories = {};
 const getRepos = async (req, res) => {
-  if (cachedRepositories[req.user.accessToken]) {
-    return res.json(cachedRepositories[req.user.accessToken]);
-  }
-
-  const repositories = [];
-  let hasNextPage = true;
-  let after = null;
-
-  while (hasNextPage) {
-    const data = await graphql(GRAPHQL_QUERY_GET_REPOS, {
-      cursor: after,
-      headers: {
-        authorization: `token ${req.user.accessToken}`
-      }
-    });
-    repositories.push(...data.repositoryOwner.repositories.nodes.filter(repo => repo.viewerCanAdminister).map(repo => {
+  const repos = await fetch('https://reports.jenkins.io/github-jenkinsci-permissions-report.json')
+    .then(response => response.json())
+    .then(data => data.filter(row => row[1] === req.user.profile.username && row[2] === 'ADMIN'));
+  res.json({
+    repos: repos.map(row => {
       return {
-        owner: repo.owner.login,
-        name: repo.name
+        owner: 'jenkinsci',
+        name: row[0]
       };
-    }));
-    hasNextPage = data.repositoryOwner.repositories.pageInfo.hasNextPage;
-    after = data.repositoryOwner.repositories.pageInfo.endCursor;
-  }
-
-  const ret = { repos: repositories };
-  if (res.locals.env === 'development') {
-    cachedRepositories[req.user.accessToken] = ret;
-  }
-  res.json(ret);
+    })
+  });
 };
 
 const getLabels = async (req, res) => {
